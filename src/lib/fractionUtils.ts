@@ -66,9 +66,12 @@ export function divideFractions(f1: Fraction, f2: Fraction): Fraction {
 }
 
 // Generate a fraction problem
-export function generateFractionProblem(id: number): FractionProblem {
+export function generateFractionProblem(
+  id: number,
+  forcedOperation?: '+' | '-' | '×' | '÷'
+): FractionProblem {
   const operations: ('+' | '-' | '×' | '÷')[] = ['+', '-', '×', '÷'];
-  const operation = operations[Math.floor(Math.random() * operations.length)];
+  const operation = forcedOperation || operations[Math.floor(Math.random() * operations.length)];
   
   let fraction1 = generateRandomFraction();
   let fraction2 = generateRandomFraction();
@@ -117,44 +120,15 @@ export function checkAnswer(problem: FractionProblem, userAnswer: UserAnswer): b
          userFraction.denominator === correctAnswer.denominator;
 }
 
-// Generate 100 fraction problems (25 of each operation)
-export function generateFractionWorksheet(): FractionProblem[] {
+// Generate fraction problems with a configurable total
+export function generateFractionWorksheet(total: number = 100): FractionProblem[] {
   const problems: FractionProblem[] = [];
   const operations: ('+' | '-' | '×' | '÷')[] = ['+', '-', '×', '÷'];
-  
-  let id = 1;
-  for (const operation of operations) {
-    for (let i = 0; i < 25; i++) {
-      let fraction1 = generateRandomFraction();
-      let fraction2 = generateRandomFraction();
-      
-      // Ensure subtraction doesn't result in negative answers
-      if (operation === '-') {
-        const temp1 = fraction1.numerator * fraction2.denominator;
-        const temp2 = fraction2.numerator * fraction1.denominator;
-        if (temp1 < temp2) {
-          [fraction1, fraction2] = [fraction2, fraction1];
-        }
-      }
-      
-      let answer: Fraction;
-      switch (operation) {
-        case '+':
-          answer = addFractions(fraction1, fraction2);
-          break;
-        case '-':
-          answer = subtractFractions(fraction1, fraction2);
-          break;
-        case '×':
-          answer = multiplyFractions(fraction1, fraction2);
-          break;
-        case '÷':
-          answer = divideFractions(fraction1, fraction2);
-          break;
-      }
-      
-      problems.push({ id: id++, fraction1, fraction2, operation, answer });
-    }
+
+  for (let i = 1; i <= total; i++) {
+    // Cycle operations for better balance while supporting any total
+    const operation = operations[(i - 1) % operations.length];
+    problems.push(generateFractionProblem(i, operation));
   }
   
   // Shuffle the problems

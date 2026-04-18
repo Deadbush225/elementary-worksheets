@@ -15,6 +15,7 @@
 	let wrongRetries = 0;
 	let startedAt = Date.now();
 	let lastBlurAttempt: Map<number, string> = new Map();
+	let itemCount = 10;
 
 	function setupMaps(nextProblems: SolidGeometryProblem[]) {
 		userAnswers = new Map();
@@ -26,7 +27,11 @@
 	}
 
 	function resetWorksheet() {
-		problems = generateSurfaceVolumeWorksheet(10);
+		const safeCount = Number.isFinite(itemCount)
+			? Math.min(40, Math.max(1, Math.floor(itemCount)))
+			: 10;
+		itemCount = safeCount;
+		problems = generateSurfaceVolumeWorksheet(safeCount);
 		setupMaps(problems);
 		lastBlurAttempt.clear();
 		wrongRetries = 0;
@@ -67,6 +72,33 @@
 			.join(" ");
 	}
 
+	function formulaText(problem: SolidGeometryProblem): string {
+		if (problem.shape === "cube") {
+			return problem.metric === "surface area" ? "SA = 6s^2" : "V = s^3";
+		}
+		if (problem.shape === "rectangular prism") {
+			return problem.metric === "surface area"
+				? "SA = 2(lw + lh + wh)"
+				: "V = l x w x h";
+		}
+		if (problem.shape === "triangular pyramid") {
+			return problem.metric === "surface area"
+				? "SA = B + 1/2 P x slant height"
+				: "V = 1/3 B x h";
+		}
+		if (problem.shape === "cone") {
+			return problem.metric === "surface area"
+				? "SA = pi r(r + l)"
+				: "V = 1/3 pi r^2 h";
+		}
+		if (problem.shape === "cylinder") {
+			return problem.metric === "surface area"
+				? "SA = 2pi r(r + h)"
+				: "V = pi r^2 h";
+		}
+		return problem.metric === "surface area" ? "SA = 4pi r^2" : "V = 4/3 pi r^3";
+	}
+
 	onMount(() => {
 		resetWorksheet();
 	});
@@ -74,6 +106,7 @@
 	$: correctCount = Array.from(answerStates.values()).filter((state) => state === "correct").length;
 	$: totalAnswered = Array.from(answerStates.values()).filter((state) => state !== "unanswered").length;
 	$: isCompleted = problems.length > 0 && correctCount === problems.length;
+	$: tokensEarned = Math.floor(problems.length / 3);
 </script>
 
 <div class="worksheet-container">
@@ -81,6 +114,11 @@
 		<div>
 			<h2>Surface Area and Volume Worksheet</h2>
 			<p>Use the dimensions in each diagram and round when necessary.</p>
+			<div class="count-controls">
+				<label for="solid-geometry-count">Items</label>
+				<input id="solid-geometry-count" type="number" min="1" max="40" bind:value={itemCount} />
+				<button class="count-btn" on:click={resetWorksheet}>Apply</button>
+			</div>
 		</div>
 		<div class="stats">
 			<span>Correct: {correctCount}/{problems.length}</span>
@@ -89,6 +127,17 @@
 			<button on:click={resetWorksheet}>New Worksheet</button>
 		</div>
 	</div>
+
+	{#if isCompleted}
+		<CompletionCertificate
+			worksheetTitle="Surface Area and Volume Worksheet"
+			totalItems={problems.length}
+			wrongRetries={wrongRetries}
+			startedAt={startedAt}
+			tokensEarned={tokensEarned}
+			tokenName="Geometry Token"
+		/>
+	{/if}
 
 	{#if isCompleted}
 		<CompletionCertificate
@@ -106,6 +155,7 @@
 					<span class="num">#{problem.id}</span>
 					<h3>{titleCase(problem.shape)}: Find {problem.metric}</h3>
 				</div>
+				<p class="formula">Formula: {formulaText(problem)}</p>
 
 				<div class="diagram-wrap">
 					<svg viewBox="0 0 220 160" aria-label="{problem.shape} diagram">
@@ -208,6 +258,36 @@
 		color: #475569;
 	}
 
+	.count-controls {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 0.6rem;
+	}
+
+	.count-controls label {
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: #475569;
+	}
+
+	.count-controls input {
+		width: 80px;
+		padding: 0.35rem;
+		border-radius: 6px;
+		border: 1px solid #94a3b8;
+	}
+
+	.count-btn {
+		background: #0f766e;
+		color: white;
+		border: none;
+		border-radius: 6px;
+		padding: 0.35rem 0.6rem;
+		font-weight: 700;
+		cursor: pointer;
+	}
+
 	.stats {
 		display: flex;
 		gap: 0.7rem;
@@ -272,6 +352,13 @@
 		margin: 0;
 		font-size: 1rem;
 		color: #0f172a;
+	}
+
+	.formula {
+		margin: 0;
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: #1d4ed8;
 	}
 
 	.diagram-wrap {

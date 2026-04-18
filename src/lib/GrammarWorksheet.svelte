@@ -287,12 +287,14 @@
 
 		const languagePrompt = language === "english" ? "English" : "Filipino";
 		const prompt = [
-			`Create exactly 10 multiple-choice ${languagePrompt} grammar questions for middle school students.`,
+			`Create exactly 10 multiple-choice ${languagePrompt} grammar questions for elementary students in Grades 4 to 6.`,
 			"Return only JSON.",
 			"Each object must have: question, options, answerIndex, explanation.",
 			"Rules:",
 			"- options must always have exactly 4 answer choices.",
 			"- answerIndex must be 0, 1, 2, or 3.",
+			"- tone and vocabulary must be age-appropriate for Grades 4 to 6.",
+			"- questions should focus on foundational grammar skills.",
 			"- explanations must be concise and accurate.",
 			"- produce 10 items exactly.",
 		].join("\n");
@@ -382,8 +384,7 @@
 			} else {
 				questions = fallbackQuestions();
 				source = "fallback";
-				generationMessage =
-					"Using built-in questions. This doesn't count. Please create new worksheet.";
+				generationMessage = "Using built-in Grade 4-6 questions.";
 			}
 		} catch {
 			questions = fallbackQuestions();
@@ -418,6 +419,7 @@
 	$: correctCount = Array.from(answerStates.values()).filter((state) => state === "correct").length;
 	$: answeredCount = Array.from(answerStates.values()).filter((state) => state !== "unanswered").length;
 	$: isCompleted = questions.length > 0 && correctCount === questions.length;
+	$: tokensEarned = Math.floor(questions.length / 5);
 </script>
 
 <div class="worksheet-container">
@@ -431,6 +433,7 @@
 			<span>Correct: {correctCount}/{questions.length}</span>
 			<span>Answered: {answeredCount}/{questions.length}</span>
 			<span>Wrong Retries: {wrongRetries}</span>
+			<span>Token Rate: 1 per 5 items</span>
 			<button on:click={loadQuestions} disabled={loading}>
 				{loading ? "Loading..." : "New Questions"}
 			</button>
@@ -443,6 +446,8 @@
 			totalItems={questions.length}
 			wrongRetries={wrongRetries}
 			startedAt={startedAt}
+			tokensEarned={tokensEarned}
+			tokenName="Language Token"
 		/>
 	{/if}
 

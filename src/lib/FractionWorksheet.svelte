@@ -11,6 +11,7 @@
 	let wrongRetries = 0;
 	let startedAt = Date.now();
 	let lastBlurAttempt: Map<number, string> = new Map();
+	let itemCount = 20;
 
 	onMount(() => {
 		problems = generateFractionWorksheet();
@@ -67,7 +68,11 @@
 	}
 
 	function resetWorksheet() {
-		problems = generateFractionWorksheet();
+		const safeCount = Number.isFinite(itemCount)
+			? Math.min(200, Math.max(1, Math.floor(itemCount)))
+			: 20;
+		itemCount = safeCount;
+		problems = generateFractionWorksheet(safeCount);
 		userAnswers.clear();
 		answerStates.clear();
 		lastBlurAttempt.clear();
@@ -88,11 +93,19 @@
 		(state) => state !== "unanswered"
 	).length;
 	$: isCompleted = problems.length > 0 && correctCount === problems.length;
+	$: tokensEarned = Math.floor(problems.length / 10);
 </script>
 
 <div class="worksheet-container">
 	<div class="worksheet-header">
-		<h2>Fraction Operations Worksheet</h2>
+		<div>
+			<h2>Fraction Operations Worksheet</h2>
+			<div class="count-controls">
+				<label for="fraction-count">Items</label>
+				<input id="fraction-count" type="number" min="1" max="200" bind:value={itemCount} />
+				<button class="count-btn" on:click={resetWorksheet}>Apply</button>
+			</div>
+		</div>
 		<div class="stats">
 			<span>Correct: {correctCount}/{problems.length}</span>
 			<span>Answered: {totalAnswered}/{problems.length}</span>
@@ -107,6 +120,8 @@
 			totalItems={problems.length}
 			wrongRetries={wrongRetries}
 			startedAt={startedAt}
+			tokensEarned={tokensEarned}
+			tokenName="Fraction Token"
 		/>
 	{/if}
 
@@ -190,6 +205,36 @@
 	.worksheet-header h2 {
 		color: #2c3e50;
 		margin: 0;
+	}
+
+	.count-controls {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 0.6rem;
+	}
+
+	.count-controls label {
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: #475569;
+	}
+
+	.count-controls input {
+		width: 80px;
+		padding: 0.35rem;
+		border-radius: 6px;
+		border: 1px solid #94a3b8;
+	}
+
+	.count-btn {
+		background: #0f766e;
+		color: white;
+		border: none;
+		border-radius: 6px;
+		padding: 0.35rem 0.6rem;
+		font-weight: 700;
+		cursor: pointer;
 	}
 
 	.stats {

@@ -18,6 +18,7 @@
 	let wrongRetries = 0;
 	let startedAt = Date.now();
 	let lastBlurAttempt: Map<number, string> = new Map();
+	let itemCount = 24;
 
 	function randomDecimal(min: number, max: number): number {
 		const value = Math.random() * (max - min) + min;
@@ -29,47 +30,42 @@
 		return Math.round(value * multiplier) / multiplier;
 	}
 
-	function buildDecimalWorksheet(): DecimalProblem[] {
+	function buildDecimalWorksheet(total: number): DecimalProblem[] {
 		const operations: DecimalProblem["operation"][] = ["+", "-", "x", "/"];
 		const worksheet: DecimalProblem[] = [];
-		let id = 1;
 
-		for (const operation of operations) {
-			for (let index = 0; index < 6; index += 1) {
-				let a = randomDecimal(1, 30);
-				let b = randomDecimal(1, 20);
+		for (let id = 1; id <= total; id += 1) {
+			const operation = operations[(id - 1) % operations.length];
+			let a = randomDecimal(1, 30);
+			let b = randomDecimal(1, 20);
 
-				if (operation === "-") {
-					if (a < b) {
-						[a, b] = [b, a];
-					}
-				}
-
-				if (operation === "/") {
-					const quotient = randomDecimal(1.2, 9.8);
-					b = randomDecimal(1, 9);
-					a = roundTo(quotient * b);
-				}
-
-				let answer = 0;
-				switch (operation) {
-					case "+":
-						answer = roundTo(a + b);
-						break;
-					case "-":
-						answer = roundTo(a - b);
-						break;
-					case "x":
-						answer = roundTo(a * b);
-						break;
-					case "/":
-						answer = roundTo(a / b);
-						break;
-				}
-
-				worksheet.push({ id, a, b, operation, answer });
-				id += 1;
+			if (operation === "-" && a < b) {
+				[a, b] = [b, a];
 			}
+
+			if (operation === "/") {
+				const quotient = randomDecimal(1.2, 9.8);
+				b = randomDecimal(1, 9);
+				a = roundTo(quotient * b);
+			}
+
+			let answer = 0;
+			switch (operation) {
+				case "+":
+					answer = roundTo(a + b);
+					break;
+				case "-":
+					answer = roundTo(a - b);
+					break;
+				case "x":
+					answer = roundTo(a * b);
+					break;
+				case "/":
+					answer = roundTo(a / b);
+					break;
+			}
+
+			worksheet.push({ id, a, b, operation, answer });
 		}
 
 		for (let i = worksheet.length - 1; i > 0; i -= 1) {
@@ -127,7 +123,11 @@
 	}
 
 	function resetWorksheet() {
-		problems = buildDecimalWorksheet();
+		const safeCount = Number.isFinite(itemCount)
+			? Math.min(120, Math.max(1, Math.floor(itemCount)))
+			: 24;
+		itemCount = safeCount;
+		problems = buildDecimalWorksheet(safeCount);
 		initializeAnswers(problems);
 		lastBlurAttempt.clear();
 		wrongRetries = 0;
@@ -141,6 +141,7 @@
 	$: correctCount = Array.from(answerStates.values()).filter((state) => state === "correct").length;
 	$: totalAnswered = Array.from(answerStates.values()).filter((state) => state !== "unanswered").length;
 	$: isCompleted = problems.length > 0 && correctCount === problems.length;
+	$: tokensEarned = Math.floor(problems.length / 10);
 
 </script>
 
@@ -149,6 +150,11 @@
 		<div>
 			<h2>Decimal Operations Worksheet</h2>
 			<p>Round answers to the nearest hundredth when needed.</p>
+			<div class="count-controls">
+				<label for="decimal-count">Items</label>
+				<input id="decimal-count" type="number" min="1" max="120" bind:value={itemCount} />
+				<button class="count-btn" on:click={resetWorksheet}>Apply</button>
+			</div>
 		</div>
 		<div class="stats">
 			<span>Correct: {correctCount}/{problems.length}</span>
@@ -164,6 +170,8 @@
 			totalItems={problems.length}
 			wrongRetries={wrongRetries}
 			startedAt={startedAt}
+			tokensEarned={tokensEarned}
+			tokenName="Decimal Token"
 		/>
 	{/if}
 
@@ -222,6 +230,36 @@
 	.worksheet-header p {
 		margin: 0.3rem 0 0;
 		color: #64748b;
+	}
+
+	.count-controls {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 0.6rem;
+	}
+
+	.count-controls label {
+		font-size: 0.9rem;
+		font-weight: 700;
+		color: #475569;
+	}
+
+	.count-controls input {
+		width: 80px;
+		padding: 0.35rem;
+		border-radius: 6px;
+		border: 1px solid #94a3b8;
+	}
+
+	.count-btn {
+		background: #0f766e;
+		color: white;
+		border: none;
+		border-radius: 6px;
+		padding: 0.35rem 0.6rem;
+		font-weight: 700;
+		cursor: pointer;
 	}
 
 	.stats {
