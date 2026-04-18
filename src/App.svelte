@@ -1,12 +1,12 @@
 <script lang="ts">
 	import Navbar from "./lib/Navbar.svelte";
 	import FractionWorksheet from "./lib/FractionWorksheet.svelte";
+	import DecimalsWorksheet from "./lib/DecimalsWorksheet.svelte";
+	import AreaPerimeterWorksheet from "./lib/AreaPerimeterWorksheet.svelte";
+	import SurfaceVolumeWorksheet from "./lib/SurfaceVolumeWorksheet.svelte";
+	import GrammarWorksheet from "./lib/GrammarWorksheet.svelte";
 
 	let currentWorksheet = "fractions";
-
-	function handleWorksheetChange(worksheetType: string) {
-		currentWorksheet = worksheetType;
-	}
 </script>
 
 <div class="app">
@@ -15,6 +15,16 @@
 	<main class="main-content">
 		{#if currentWorksheet === "fractions"}
 			<FractionWorksheet />
+		{:else if currentWorksheet === "decimals"}
+			<DecimalsWorksheet />
+		{:else if currentWorksheet === "area-perimeter"}
+			<AreaPerimeterWorksheet />
+		{:else if currentWorksheet === "surface-volume"}
+			<SurfaceVolumeWorksheet />
+		{:else if currentWorksheet === "english-grammar"}
+			<GrammarWorksheet language="english" />
+		{:else if currentWorksheet === "filipino-grammar"}
+			<GrammarWorksheet language="filipino" />
 		{:else}
 			<div class="placeholder">
 				<h2>

@@ -2,6 +2,16 @@
 
 This template should help get you started developing with Svelte and TypeScript in Vite.
 
+## Groq API Setup (for Grammar Worksheets)
+
+To enable Groq-generated grammar questions, create a `.env` file in the project root:
+
+```bash
+VITE_GROQ_API_KEY=your_groq_api_key_here
+```
+
+If the key is missing or the request fails, the app automatically falls back to built-in grammar questions.
+
 ## Recommended IDE Setup
 
 [VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).

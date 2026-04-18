@@ -1,15 +1,23 @@
 <script lang="ts">
 	export let currentWorksheet: string = "fractions";
+	let isMenuOpen = false;
 
 	const worksheets = [
 		{ id: "fractions", name: "Fractions" },
 		{ id: "decimals", name: "Decimals" },
-		{ id: "integers", name: "Integers" },
-		{ id: "algebra", name: "Algebra" },
+		{ id: "area-perimeter", name: "Area & Perimeter" },
+		{ id: "surface-volume", name: "Surface Area & Volume" },
+		{ id: "english-grammar", name: "English Grammar" },
+		{ id: "filipino-grammar", name: "Filipino Grammar" },
 	];
 
 	function selectWorksheet(worksheetId: string) {
 		currentWorksheet = worksheetId;
+		isMenuOpen = false;
+	}
+
+	function toggleMenu() {
+		isMenuOpen = !isMenuOpen;
 	}
 </script>
 
@@ -17,7 +25,12 @@
 	<div class="nav-brand">
 		<h1>Math Worksheets</h1>
 	</div>
-	<ul class="nav-menu">
+	<button class="menu-toggle" aria-label="Toggle navigation menu" on:click={toggleMenu}>
+		<span></span>
+		<span></span>
+		<span></span>
+	</button>
+	<ul class="nav-menu" class:open={isMenuOpen}>
 		{#each worksheets as worksheet}
 			<li>
 				<button
@@ -39,6 +52,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+		position: relative;
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 	}
 
@@ -54,6 +68,24 @@
 		margin: 0;
 		padding: 0;
 		gap: 1rem;
+		flex-wrap: wrap;
+	}
+
+	.menu-toggle {
+		display: none;
+		flex-direction: column;
+		gap: 4px;
+		background: transparent;
+		border: none;
+		padding: 0.35rem;
+		cursor: pointer;
+	}
+
+	.menu-toggle span {
+		display: block;
+		width: 22px;
+		height: 2px;
+		background: #ecf0f1;
 	}
 
 	.nav-link {
@@ -74,5 +106,39 @@
 	.nav-link.active {
 		background-color: #3498db;
 		color: white;
+	}
+
+	@media (max-width: 880px) {
+		.navbar {
+			padding: 1rem;
+			flex-wrap: wrap;
+		}
+
+		.menu-toggle {
+			display: flex;
+		}
+
+		.nav-menu {
+			display: none;
+			position: absolute;
+			top: calc(100% + 0.4rem);
+			left: 1rem;
+			right: 1rem;
+			background: #233445;
+			border-radius: 10px;
+			padding: 0.6rem;
+			flex-direction: column;
+			gap: 0.45rem;
+			z-index: 10;
+		}
+
+		.nav-menu.open {
+			display: flex;
+		}
+
+		.nav-link {
+			width: 100%;
+			text-align: left;
+		}
 	}
 </style>
