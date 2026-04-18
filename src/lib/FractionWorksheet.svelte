@@ -2,11 +2,15 @@
 	import { onMount } from "svelte";
 	import type { FractionProblem, UserAnswer } from "./fractionUtils";
 	import { generateFractionWorksheet, checkAnswer } from "./fractionUtils";
+	import CompletionCertificate from "./CompletionCertificate.svelte";
 
 	let problems: FractionProblem[] = [];
 	let userAnswers: Map<number, UserAnswer> = new Map();
 	let answerStates: Map<number, "correct" | "incorrect" | "unanswered"> =
 		new Map();
+	let wrongRetries = 0;
+	let startedAt = Date.now();
+	let lastBlurAttempt: Map<number, string> = new Map();
 
 	onMount(() => {
 		problems = generateFractionWorksheet();
@@ -43,10 +47,32 @@
 		answerStates = new Map(answerStates);
 	}
 
+	function handleAnswerBlur(problemId: number) {
+		const answer = userAnswers.get(problemId);
+		if (!answer || answer.numerator === "" || answer.denominator === "") {
+			return;
+		}
+
+		const problem = problems.find((p) => p.id === problemId);
+		if (!problem) {
+			return;
+		}
+
+		const attempt = `${answer.numerator}/${answer.denominator}`;
+		const isCorrect = checkAnswer(problem, answer);
+		if (!isCorrect && lastBlurAttempt.get(problemId) !== attempt) {
+			wrongRetries += 1;
+			lastBlurAttempt.set(problemId, attempt);
+		}
+	}
+
 	function resetWorksheet() {
 		problems = generateFractionWorksheet();
 		userAnswers.clear();
 		answerStates.clear();
+		lastBlurAttempt.clear();
+		wrongRetries = 0;
+		startedAt = Date.now();
 		problems.forEach((problem) => {
 			answerStates.set(problem.id, "unanswered");
 			userAnswers.set(problem.id, { numerator: "", denominator: "" });
@@ -61,6 +87,7 @@
 	$: totalAnswered = Array.from(answerStates.values()).filter(
 		(state) => state !== "unanswered"
 	).length;
+	$: isCompleted = problems.length > 0 && correctCount === problems.length;
 </script>
 
 <div class="worksheet-container">
@@ -69,9 +96,19 @@
 		<div class="stats">
 			<span>Correct: {correctCount}/{problems.length}</span>
 			<span>Answered: {totalAnswered}/{problems.length}</span>
+			<span>Wrong Retries: {wrongRetries}</span>
 			<button class="reset-btn" on:click={resetWorksheet}>New Worksheet</button>
 		</div>
 	</div>
+
+	{#if isCompleted}
+		<CompletionCertificate
+			worksheetTitle="Fraction Operations Worksheet"
+			totalItems={problems.length}
+			wrongRetries={wrongRetries}
+			startedAt={startedAt}
+		/>
+	{/if}
 
 	<div class="problems-grid">
 		{#each problems as problem (problem.id)}
@@ -109,6 +146,7 @@
 										"numerator",
 										(e.target as HTMLInputElement).value
 									)}
+								on:blur={() => handleAnswerBlur(problem.id)}
 							/>
 							<div class="answer-fraction-bar"></div>
 							<input
@@ -123,6 +161,7 @@
 										"denominator",
 										(e.target as HTMLInputElement).value
 									)}
+								on:blur={() => handleAnswerBlur(problem.id)}
 							/>
 						</div>
 					</div>

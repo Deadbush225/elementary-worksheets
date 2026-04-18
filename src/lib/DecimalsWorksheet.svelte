@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import CompletionCertificate from "./CompletionCertificate.svelte";
 
 	interface DecimalProblem {
 		id: number;
@@ -14,6 +15,9 @@
 	let problems: DecimalProblem[] = [];
 	let userAnswers: Map<number, string> = new Map();
 	let answerStates: Map<number, AnswerState> = new Map();
+	let wrongRetries = 0;
+	let startedAt = Date.now();
+	let lastBlurAttempt: Map<number, string> = new Map();
 
 	function randomDecimal(min: number, max: number): number {
 		const value = Math.random() * (max - min) + min;
@@ -109,9 +113,25 @@
 		answerStates = new Map(answerStates);
 	}
 
+	function handleAnswerBlur(problem: DecimalProblem) {
+		const answer = (userAnswers.get(problem.id) || "").trim();
+		if (answer === "") {
+			return;
+		}
+
+		const correct = isCorrect(problem, answer);
+		if (!correct && lastBlurAttempt.get(problem.id) !== answer) {
+			wrongRetries += 1;
+			lastBlurAttempt.set(problem.id, answer);
+		}
+	}
+
 	function resetWorksheet() {
 		problems = buildDecimalWorksheet();
 		initializeAnswers(problems);
+		lastBlurAttempt.clear();
+		wrongRetries = 0;
+		startedAt = Date.now();
 	}
 
 	onMount(() => {
@@ -120,6 +140,7 @@
 
 	$: correctCount = Array.from(answerStates.values()).filter((state) => state === "correct").length;
 	$: totalAnswered = Array.from(answerStates.values()).filter((state) => state !== "unanswered").length;
+	$: isCompleted = problems.length > 0 && correctCount === problems.length;
 
 </script>
 
@@ -132,9 +153,19 @@
 		<div class="stats">
 			<span>Correct: {correctCount}/{problems.length}</span>
 			<span>Answered: {totalAnswered}/{problems.length}</span>
+			<span>Wrong Retries: {wrongRetries}</span>
 			<button class="reset-btn" on:click={resetWorksheet}>New Worksheet</button>
 		</div>
 	</div>
+
+	{#if isCompleted}
+		<CompletionCertificate
+			worksheetTitle="Decimal Operations Worksheet"
+			totalItems={problems.length}
+			wrongRetries={wrongRetries}
+			startedAt={startedAt}
+		/>
+	{/if}
 
 	<div class="problems-grid">
 		{#each problems as problem (problem.id)}
@@ -158,6 +189,7 @@
 						value={userAnswers.get(problem.id) || ""}
 						on:input={(event) =>
 							handleAnswerChange(problem.id, (event.target as HTMLInputElement).value)}
+						on:blur={() => handleAnswerBlur(problem)}
 					/>
 				</div>
 			</div>

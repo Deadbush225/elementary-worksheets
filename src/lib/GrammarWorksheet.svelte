@@ -1,4 +1,6 @@
 <script lang="ts">
+	import CompletionCertificate from "./CompletionCertificate.svelte";
+
 	export let language: "english" | "filipino" = "english";
 
 	type AnswerState = "correct" | "incorrect" | "unanswered";
@@ -18,6 +20,8 @@
 	let source: "groq" | "fallback" = "fallback";
 	let generationMessage = "";
 	let loadedLanguage: "english" | "filipino" | null = null;
+	let wrongRetries = 0;
+	let startedAt = Date.now();
 
 	const fallbackEnglish: GrammarQuestion[] = [
 		{
@@ -354,6 +358,8 @@
 	function initializeStates(nextQuestions: GrammarQuestion[]) {
 		selectedAnswers = new Map();
 		answerStates = new Map();
+		wrongRetries = 0;
+		startedAt = Date.now();
 		nextQuestions.forEach((question) => {
 			selectedAnswers.set(question.id, -1);
 			answerStates.set(question.id, "unanswered");
@@ -390,6 +396,11 @@
 	}
 
 	function selectOption(question: GrammarQuestion, optionIndex: number) {
+		const previous = selectedAnswers.get(question.id);
+		if (optionIndex !== question.answerIndex && previous !== optionIndex) {
+			wrongRetries += 1;
+		}
+
 		selectedAnswers.set(question.id, optionIndex);
 		answerStates.set(
 			question.id,
@@ -406,6 +417,7 @@
 
 	$: correctCount = Array.from(answerStates.values()).filter((state) => state === "correct").length;
 	$: answeredCount = Array.from(answerStates.values()).filter((state) => state !== "unanswered").length;
+	$: isCompleted = questions.length > 0 && correctCount === questions.length;
 </script>
 
 <div class="worksheet-container">
@@ -418,11 +430,21 @@
 		<div class="stats">
 			<span>Correct: {correctCount}/{questions.length}</span>
 			<span>Answered: {answeredCount}/{questions.length}</span>
+			<span>Wrong Retries: {wrongRetries}</span>
 			<button on:click={loadQuestions} disabled={loading}>
 				{loading ? "Loading..." : "New Questions"}
 			</button>
 		</div>
 	</div>
+
+	{#if isCompleted}
+		<CompletionCertificate
+			worksheetTitle={language === "english" ? "English Grammar Worksheet" : "Filipino Grammar Worksheet"}
+			totalItems={questions.length}
+			wrongRetries={wrongRetries}
+			startedAt={startedAt}
+		/>
+	{/if}
 
 	{#if loading}
 		<div class="loading">Generating questions...</div>

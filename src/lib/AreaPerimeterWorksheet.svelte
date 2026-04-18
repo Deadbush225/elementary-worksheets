@@ -5,12 +5,16 @@
 		isNumericAnswerCorrect,
 		type FlatGeometryProblem,
 	} from "./geometryUtils";
+	import CompletionCertificate from "./CompletionCertificate.svelte";
 
 	type AnswerState = "correct" | "incorrect" | "unanswered";
 
 	let problems: FlatGeometryProblem[] = [];
 	let userAnswers: Map<number, string> = new Map();
 	let answerStates: Map<number, AnswerState> = new Map();
+	let wrongRetries = 0;
+	let startedAt = Date.now();
+	let lastBlurAttempt: Map<number, string> = new Map();
 
 	function initializeAnswerMaps(nextProblems: FlatGeometryProblem[]) {
 		userAnswers = new Map();
@@ -24,6 +28,9 @@
 	function resetWorksheet() {
 		problems = generateAreaPerimeterWorksheet(10);
 		initializeAnswerMaps(problems);
+		lastBlurAttempt.clear();
+		wrongRetries = 0;
+		startedAt = Date.now();
 	}
 
 	function handleAnswer(problem: FlatGeometryProblem, value: string) {
@@ -40,6 +47,19 @@
 		answerStates = new Map(answerStates);
 	}
 
+	function handleAnswerBlur(problem: FlatGeometryProblem) {
+		const answer = (userAnswers.get(problem.id) || "").trim();
+		if (answer === "") {
+			return;
+		}
+
+		const isCorrect = isNumericAnswerCorrect(problem.answer, answer);
+		if (!isCorrect && lastBlurAttempt.get(problem.id) !== answer) {
+			wrongRetries += 1;
+			lastBlurAttempt.set(problem.id, answer);
+		}
+	}
+
 	function titleCase(text: string): string {
 		return text
 			.split(" ")
@@ -53,6 +73,7 @@
 
 	$: correctCount = Array.from(answerStates.values()).filter((state) => state === "correct").length;
 	$: totalAnswered = Array.from(answerStates.values()).filter((state) => state !== "unanswered").length;
+	$: isCompleted = problems.length > 0 && correctCount === problems.length;
 </script>
 
 <div class="worksheet-container">
@@ -64,9 +85,19 @@
 		<div class="stats">
 			<span>Correct: {correctCount}/{problems.length}</span>
 			<span>Answered: {totalAnswered}/{problems.length}</span>
+			<span>Wrong Retries: {wrongRetries}</span>
 			<button on:click={resetWorksheet}>New Worksheet</button>
 		</div>
 	</div>
+
+	{#if isCompleted}
+		<CompletionCertificate
+			worksheetTitle="Area and Perimeter Worksheet"
+			totalItems={problems.length}
+			wrongRetries={wrongRetries}
+			startedAt={startedAt}
+		/>
+	{/if}
 
 	<div class="card-grid">
 		{#each problems as problem (problem.id)}
@@ -129,6 +160,7 @@
 						placeholder="value"
 						value={userAnswers.get(problem.id) || ""}
 						on:input={(event) => handleAnswer(problem, (event.target as HTMLInputElement).value)}
+						on:blur={() => handleAnswerBlur(problem)}
 					/>
 				</div>
 			</div>
