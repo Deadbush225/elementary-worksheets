@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { jsPDF } from "jspdf";
+	import { onMount } from "svelte";
+	import { dbService } from "./firebase";
 
 	export let worksheetTitle: string;
 	export let totalItems: number;
@@ -20,6 +22,17 @@
 			: tokensEarned >= 1
 				? "Shiny Badge Pack"
 				: "No prize unlocked yet";
+
+	onMount(() => {
+		const playerId = localStorage.getItem("playerName") || "Learner";
+		dbService.savePlayerRecord(playerId, tokensEarned, [prizeName]).then(result => {
+			if (result.success) {
+				console.log("Firebase updated successfully with certificate completion.");
+			} else {
+				console.error("Failed to update Firebase:", result.error);
+			}
+		});
+	});
 
 	function downloadCertificatePdf() {
 		const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
