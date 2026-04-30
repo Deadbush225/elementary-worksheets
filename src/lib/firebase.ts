@@ -1,0 +1,61 @@
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from 'firebase/firestore';
+
+// Your web app's Firebase configuration
+// Replace these with your actual Firebase project settings
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "YOUR_API_KEY",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "YOUR_AUTH_DOMAIN",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "YOUR_PROJECT_ID",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "YOUR_STORAGE_BUCKET",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "YOUR_MESSAGING_SENDER_ID",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "YOUR_APP_ID"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+export const dbService = {
+  /**
+   * Save player progress (tokens and prizes)
+   */
+  async savePlayerRecord(playerId: string, tokens: number, prizes: string[]) {
+    try {
+      const docRef = await addDoc(collection(db, "player_records"), {
+        playerId,
+        tokens,
+        prizes,
+        date: serverTimestamp()
+      });
+      return { success: true, id: docRef.id };
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Get player's records history
+   */
+  async getPlayerRecords(playerId: string) {
+    try {
+      const q = query(
+        collection(db, "player_records"), 
+        where("playerId", "==", playerId),
+        orderBy("date", "desc")
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const records: any[] = [];
+      querySnapshot.forEach((doc) => {
+        records.push({ id: doc.id, ...doc.data() });
+      });
+      
+      return { success: true, data: records };
+    } catch (error) {
+      console.error("Error fetching documents: ", error);
+      return { success: false, error };
+    }
+  }
+};

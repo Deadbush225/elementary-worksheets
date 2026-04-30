@@ -19,6 +19,10 @@
     "vite": "^7.2.4"
   },
   "dependencies": {
+    "better-sqlite3": "^12.9.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "firebase": "^12.12.1",
     "jspdf": "^4.2.1"
   }
 }
