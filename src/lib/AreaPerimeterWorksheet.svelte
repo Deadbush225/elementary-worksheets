@@ -128,15 +128,6 @@
 		/>
 	{/if}
 
-	{#if isCompleted}
-		<CompletionCertificate
-			worksheetTitle="Area and Perimeter Worksheet"
-			totalItems={problems.length}
-			wrongRetries={wrongRetries}
-			startedAt={startedAt}
-		/>
-	{/if}
-
 	<div class="card-grid">
 		{#each problems as problem (problem.id)}
 			<div class="problem-card">

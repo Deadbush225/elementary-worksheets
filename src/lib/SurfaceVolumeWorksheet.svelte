@@ -139,15 +139,6 @@
 		/>
 	{/if}
 
-	{#if isCompleted}
-		<CompletionCertificate
-			worksheetTitle="Surface Area and Volume Worksheet"
-			totalItems={problems.length}
-			wrongRetries={wrongRetries}
-			startedAt={startedAt}
-		/>
-	{/if}
-
 	<div class="card-grid">
 		{#each problems as problem (problem.id)}
 			<div class="problem-card">

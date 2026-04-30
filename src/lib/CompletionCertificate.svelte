@@ -1,3 +1,7 @@
+<script context="module">
+	let lastSavedTime = 0;
+</script>
+
 <script lang="ts">
 	import { jsPDF } from "jspdf";
 	import { onMount } from "svelte";
@@ -23,7 +27,16 @@
 				? "Shiny Badge Pack"
 				: "No prize unlocked yet";
 
+	let hasSaved = false;
+
 	onMount(() => {
+		const now = Date.now();
+		// Prevent duplicate saves within exactly 3 seconds (e.g. strict mode or double mounting)
+		if (hasSaved || (now - lastSavedTime < 3000)) return;
+		
+		hasSaved = true;
+		lastSavedTime = now;
+		
 		const playerId = localStorage.getItem("playerName") || "Learner";
 		dbService.savePlayerRecord(playerId, tokensEarned, [prizeName]).then(result => {
 			if (result.success) {
