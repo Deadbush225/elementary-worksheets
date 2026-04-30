@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc, setDoc } from 'firebase/firestore';
 
 // Your web app's Firebase configuration
 // Replace these with your actual Firebase project settings
@@ -55,6 +55,38 @@ export const dbService = {
       return { success: true, data: records };
     } catch (error) {
       console.error("Error fetching documents: ", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Get player's profile (including last reset date)
+   */
+  async getPlayerProfile(playerId: string) {
+    try {
+      const docRef = doc(db, "player_profiles", playerId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return { success: true, data: docSnap.data() };
+      } else {
+        return { success: true, data: { lastResetDate: null } };
+      }
+    } catch (error) {
+      console.error("Error fetching profile: ", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Reset player's metrics count date
+   */
+  async resetPlayerCount(playerId: string) {
+    try {
+      const docRef = doc(db, "player_profiles", playerId);
+      await setDoc(docRef, { lastResetDate: serverTimestamp() }, { merge: true });
+      return { success: true };
+    } catch (error) {
+      console.error("Error resetting player count: ", error);
       return { success: false, error };
     }
   }

@@ -1,6 +1,9 @@
 <script lang="ts">
+	import StatsPopup from "./StatsPopup.svelte";
+
 	export let currentWorksheet: string = "fractions";
 	let isMenuOpen = false;
+	let isStatsOpen = false;
 
 	const worksheets = [
 		{ id: "fractions", name: "Fractions" },
@@ -19,17 +22,31 @@
 	function toggleMenu() {
 		isMenuOpen = !isMenuOpen;
 	}
+
+	function toggleStats() {
+		isStatsOpen = !isStatsOpen;
+	}
 </script>
+
+{#if isStatsOpen}
+	<StatsPopup onClose={toggleStats} />
+{/if}
 
 <nav class="navbar">
 	<div class="nav-brand">
 		<h1>Math Worksheets</h1>
 	</div>
-	<button class="menu-toggle" aria-label="Toggle navigation menu" on:click={toggleMenu}>
-		<span></span>
-		<span></span>
-		<span></span>
-	</button>
+	
+	<div class="nav-actions">
+		<button class="stats-btn" on:click={toggleStats} aria-label="View Stats">
+			🌟 Rewards
+		</button>
+		<button class="menu-toggle" aria-label="Toggle navigation menu" on:click={toggleMenu}>
+			<span></span>
+			<span></span>
+			<span></span>
+		</button>
+	</div>
 	<ul class="nav-menu" class:open={isMenuOpen}>
 		{#each worksheets as worksheet}
 			<li>
@@ -79,6 +96,31 @@
 		border: none;
 		padding: 0.35rem;
 		cursor: pointer;
+	}
+
+	.nav-actions {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.stats-btn {
+		background: #f1c40f;
+		color: #2c3e50;
+		border: none;
+		padding: 0.4rem 0.8rem;
+		border-radius: 6px;
+		font-weight: bold;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		transition: transform 0.2s, background 0.2s;
+	}
+
+	.stats-btn:hover {
+		background: #f39c12;
+		transform: scale(1.05);
 	}
 
 	.menu-toggle span {
