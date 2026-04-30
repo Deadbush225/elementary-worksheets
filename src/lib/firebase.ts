@@ -40,16 +40,23 @@ export const dbService = {
    */
   async getPlayerRecords(playerId: string) {
     try {
+      // We fetch all and sort client-side to avoid needing a composite index
       const q = query(
         collection(db, "player_records"), 
-        where("playerId", "==", playerId),
-        orderBy("date", "desc")
+        where("playerId", "==", playerId)
       );
       
       const querySnapshot = await getDocs(q);
       const records: any[] = [];
       querySnapshot.forEach((doc) => {
         records.push({ id: doc.id, ...doc.data() });
+      });
+      
+      // Sort by date DESC
+      records.sort((a, b) => {
+        const dateA = a.date?.toMillis ? a.date.toMillis() : 0;
+        const dateB = b.date?.toMillis ? b.date.toMillis() : 0;
+        return dateB - dateA;
       });
       
       return { success: true, data: records };
