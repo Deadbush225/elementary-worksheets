@@ -38,14 +38,16 @@
 		},
 		{
 			id: 2,
-			question: "Which word correctly completes the sentence: 'I have ____ books than you.'",
+			question:
+				"Which word correctly completes the sentence: 'I have ____ books than you.'",
 			options: ["fewer", "less", "few", "many"],
 			answerIndex: 0,
 			explanation: "Use 'fewer' for countable nouns like books.",
 		},
 		{
 			id: 3,
-			question: "Identify the adjective in the sentence: 'The bright sun warmed the beach.'",
+			question:
+				"Identify the adjective in the sentence: 'The bright sun warmed the beach.'",
 			options: ["warmed", "bright", "beach", "sun"],
 			answerIndex: 1,
 			explanation: "'Bright' describes the noun 'sun'.",
@@ -64,7 +66,9 @@
 		},
 		{
 			id: 5,
-			question: "Which pronoun correctly completes the sentence: 'This gift is for ___." + "'",
+			question:
+				"Which pronoun correctly completes the sentence: 'This gift is for ___." +
+				"'",
 			options: ["I", "me", "my", "mine"],
 			answerIndex: 1,
 			explanation: "After a preposition, use the object pronoun 'me'.",
@@ -95,7 +99,8 @@
 		},
 		{
 			id: 8,
-			question: "Which word is an adverb in the sentence: 'He quickly solved the puzzle.'",
+			question:
+				"Which word is an adverb in the sentence: 'He quickly solved the puzzle.'",
 			options: ["He", "quickly", "solved", "puzzle"],
 			answerIndex: 1,
 			explanation: "'Quickly' describes how he solved the puzzle.",
@@ -144,11 +149,13 @@
 				"Nang umalis siya maaga.",
 			],
 			answerIndex: 1,
-			explanation: "'Nang' ang gamit kapag naglalarawan ng paraan, oras, o dalas.",
+			explanation:
+				"'Nang' ang gamit kapag naglalarawan ng paraan, oras, o dalas.",
 		},
 		{
 			id: 3,
-			question: "Ano ang panghalip sa pangungusap na: 'Sila ay naglalaro sa labas.'",
+			question:
+				"Ano ang panghalip sa pangungusap na: 'Sila ay naglalaro sa labas.'",
 			options: ["naglalaro", "labas", "sila", "ay"],
 			answerIndex: 2,
 			explanation: "Ang 'sila' ay panghalip panao.",
@@ -179,7 +186,8 @@
 		},
 		{
 			id: 6,
-			question: "Alin ang pang-uri sa pangungusap na: 'Maganda ang tanawin sa bundok.'",
+			question:
+				"Alin ang pang-uri sa pangungusap na: 'Maganda ang tanawin sa bundok.'",
 			options: ["tanawin", "bundok", "maganda", "ang"],
 			answerIndex: 2,
 			explanation: "Ang 'maganda' ay naglalarawan sa tanawin.",
@@ -194,7 +202,8 @@
 				"Gusto ko dinng tubig.",
 			],
 			answerIndex: 0,
-			explanation: "Karaniwang ginagamit ang 'rin' kapag patinig ang naunang tunog.",
+			explanation:
+				"Karaniwang ginagamit ang 'rin' kapag patinig ang naunang tunog.",
 		},
 		{
 			id: 8,
@@ -210,7 +219,8 @@
 		},
 		{
 			id: 9,
-			question: "Alin ang wastong pangatnig sa pangungusap: 'Nag-aral siya ___ pumasa sa pagsusulit.'",
+			question:
+				"Alin ang wastong pangatnig sa pangungusap: 'Nag-aral siya ___ pumasa sa pagsusulit.'",
 			options: ["kaya", "upang", "ngunit", "dahil"],
 			answerIndex: 1,
 			explanation: "Ginagamit ang 'upang' upang ipakita ang layunin.",
@@ -279,53 +289,57 @@
 		return normalized;
 	}
 
-	async function fetchGroqQuestions(): Promise<GrammarQuestion[] | null> {
-		const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+	async function fetchOpenRouterQuestions(): Promise<GrammarQuestion[] | null> {
+		const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
 		if (!apiKey) {
 			return null;
 		}
 
 		const languagePrompt = language === "english" ? "English" : "Filipino";
 		const prompt = [
-			`Create exactly 10 multiple-choice ${languagePrompt} grammar questions for elementary students in Grades 4 to 6.`,
-			"Return only JSON.",
-			"Each object must have: question, options, answerIndex, explanation.",
+			`Create exactly 20 multiple-choice ${languagePrompt} grammar questions for elementary students in Grades 4 to 6.`,
+			"Return exactly 20 items in a JSON format.",
+			"Each object must have the following keys: question, options, answerIndex, explanation.",
 			"Rules:",
 			"- options must always have exactly 4 answer choices.",
 			"- answerIndex must be 0, 1, 2, or 3.",
 			"- tone and vocabulary must be age-appropriate for Grades 4 to 6.",
 			"- questions should focus on foundational grammar skills.",
+			"- CONTEXTUAL QUESTIONS: Do not just ask bare questions. Provide a brief concept or definition first. Example: 'A noun is a word that names a person, place, thing, or idea. In the sentence \"The brave dog barked,\" which word is the noun?'",
 			"- explanations must be concise and accurate.",
-			"- produce 10 items exactly.",
 		].join("\n");
 
 		const response = await fetch(
-			"https://api.groq.com/openai/v1/chat/completions",
+			"https://openrouter.ai/api/v1/chat/completions",
 			{
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 					Authorization: `Bearer ${apiKey}`,
+					"HTTP-Referer": window.location.origin,
+					"X-Title": "Grammar Quiz App",
 				},
 				body: JSON.stringify({
-					model: "llama-3.1-8b-instant",
+					// Using the highest-quality free model on OpenRouter
+					model: "meta-llama/llama-3.3-70b-instruct:free",
 					messages: [
 						{
 							role: "system",
 							content:
-								"You are a strict JSON generator for grammar worksheets. Return valid JSON only.",
+								"You are a strict JSON generator for educational worksheets. Return valid JSON containing a 'questions' array. Return nothing else.",
 						},
 						{ role: "user", content: prompt },
 					],
 					response_format: { type: "json_object" },
 					temperature: 0.5,
-					max_tokens: 2000,
+					// Bumped to 4000 because 20 questions with added context will be much longer
+					max_tokens: 4000,
 				}),
-			}
+			},
 		);
 
 		if (!response.ok) {
-			throw new Error(`Groq request failed: ${response.status}`);
+			throw new Error(`OpenRouter request failed: ${response.status}`);
 		}
 
 		const data = await response.json();
@@ -353,10 +367,6 @@
 		return sanitizeQuestions(parsed);
 	}
 
-	function fallbackQuestions(): GrammarQuestion[] {
-		return (language === "english" ? fallbackEnglish : fallbackFilipino).slice(0, 10);
-	}
-
 	function initializeStates(nextQuestions: GrammarQuestion[]) {
 		selectedAnswers = new Map();
 		answerStates = new Map();
@@ -373,7 +383,7 @@
 		generationMessage = "";
 
 		try {
-			const generated = await fetchGroqQuestions();
+			const generated = await fetchOpenRouterQuestions();
 			if (generated && generated.length >= 10) {
 				questions = generated.slice(0, 10).map((question, index) => ({
 					...question,
@@ -382,14 +392,16 @@
 				source = "groq";
 				generationMessage = "Questions generated with Groq API.";
 			} else {
-				questions = fallbackQuestions();
+				questions = language === "english" ? fallbackEnglish : fallbackFilipino;
 				source = "fallback";
 				generationMessage = "Using built-in Grade 4-6 questions.";
 			}
 		} catch {
-			questions = fallbackQuestions();
+			// questions = await fetchOpenRouterQuestions();
+			questions = language === "english" ? fallbackEnglish : fallbackFilipino;
 			source = "fallback";
-			generationMessage = "Groq request failed, so built-in questions are shown instead.";
+			generationMessage =
+				"OpenRouter request failed, so built-in questions are shown instead.";
 		} finally {
 			initializeStates(questions);
 			loading = false;
@@ -405,7 +417,7 @@
 		selectedAnswers.set(question.id, optionIndex);
 		answerStates.set(
 			question.id,
-			optionIndex === question.answerIndex ? "correct" : "incorrect"
+			optionIndex === question.answerIndex ? "correct" : "incorrect",
 		);
 		selectedAnswers = new Map(selectedAnswers);
 		answerStates = new Map(answerStates);
@@ -416,8 +428,12 @@
 		loadQuestions();
 	}
 
-	$: correctCount = Array.from(answerStates.values()).filter((state) => state === "correct").length;
-	$: answeredCount = Array.from(answerStates.values()).filter((state) => state !== "unanswered").length;
+	$: correctCount = Array.from(answerStates.values()).filter(
+		(state) => state === "correct",
+	).length;
+	$: answeredCount = Array.from(answerStates.values()).filter(
+		(state) => state !== "unanswered",
+	).length;
 	$: isCompleted = questions.length > 0 && correctCount === questions.length;
 	$: tokensEarned = Math.floor(questions.length / 5);
 </script>
@@ -425,9 +441,13 @@
 <div class="worksheet-container">
 	<div class="worksheet-header">
 		<div>
-			<h2>{language === "english" ? "English Grammar" : "Filipino Grammar"} Worksheet</h2>
+			<h2>
+				{language === "english" ? "English Grammar" : "Filipino Grammar"} Worksheet
+			</h2>
 			<p>Choose the best answer for each question.</p>
-			<p class="source-info" class:fallback={source === "fallback"}>{generationMessage}</p>
+			<p class="source-info" class:fallback={source === "fallback"}>
+				{generationMessage}
+			</p>
 		</div>
 		<div class="stats">
 			<span>Correct: {correctCount}/{questions.length}</span>
@@ -442,11 +462,13 @@
 
 	{#if isCompleted}
 		<CompletionCertificate
-			worksheetTitle={language === "english" ? "English Grammar Worksheet" : "Filipino Grammar Worksheet"}
+			worksheetTitle={language === "english"
+				? "English Grammar Worksheet"
+				: "Filipino Grammar Worksheet"}
 			totalItems={questions.length}
-			wrongRetries={wrongRetries}
-			startedAt={startedAt}
-			tokensEarned={tokensEarned}
+			{wrongRetries}
+			{startedAt}
+			{tokensEarned}
 			tokenName="Language Token"
 		/>
 	{/if}
@@ -467,7 +489,8 @@
 							<button
 								type="button"
 								class="option"
-								class:selected={selectedAnswers.get(question.id) === optionIndex}
+								class:selected={selectedAnswers.get(question.id) ===
+									optionIndex}
 								on:click={() => selectOption(question, optionIndex)}
 							>
 								{option}
