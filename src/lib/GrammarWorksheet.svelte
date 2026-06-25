@@ -292,81 +292,124 @@
 	async function fetchOpenRouterQuestions(): Promise<GrammarQuestion[] | null> {
 		const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
 		if (!apiKey) {
+			console.error("Missing OpenRouter API key");
 			return null;
 		}
 
 		const languagePrompt = language === "english" ? "English" : "Filipino";
 		const prompt = [
-			`Create exactly 20 multiple-choice ${languagePrompt} grammar questions for elementary students in Grades 4 to 6.`,
+			`Create exactly 20 diverse multiple-choice ${languagePrompt} grammar questions tailored for upper elementary students (focusing heavily on Grades 5 and 6 competencies).`,
 			"Return exactly 20 items in a JSON format.",
 			"Each object must have the following keys: question, options, answerIndex, explanation.",
 			"Rules:",
 			"- options must always have exactly 4 answer choices.",
 			"- answerIndex must be 0, 1, 2, or 3.",
-			"- tone and vocabulary must be age-appropriate for Grades 4 to 6.",
-			"- questions should focus on foundational grammar skills.",
-			"- CONTEXTUAL QUESTIONS: Do not just ask bare questions. Provide a brief concept or definition first. Example: 'A noun is a word that names a person, place, thing, or idea. In the sentence \"The brave dog barked,\" which word is the noun?'",
+			"- tone and vocabulary must be age-appropriate for Grades 5 and 6.",
 			"- explanations must be concise and accurate.",
+			"- CONTEXTUAL QUESTIONS: Provide a brief concept, rule, or definition first. Example: 'A complex sentence contains an independent clause and at least one dependent clause. Which of the following is a complex sentence?'",
+			"",
+			"CURRICULUM SCOPE (Select a broad, randomized mix from these advanced Grade 5-6 concepts):",
+			language === "english"
+				? [
+						"- Advanced Verb Tenses (Present, Past, and Future PERFECT tenses)",
+						"- Active and Passive Voice (identifying or converting between them)",
+						"- Direct and Reported (Indirect) Speech",
+						"- Sentence Structures (differentiating Simple, Compound, and Complex sentences)",
+						"- Subordinating and Coordinating Conjunctions (FANBOYS vs. AAAWWUBBIS)",
+						"- Advanced Subject-Verb Agreement (Indefinite pronouns, collective nouns, inverted sentences)",
+						"- Degrees of Adjectives and the proper order of adjectives in a series",
+						"- Prepositions of time, place, and movement",
+						"- Modal Verbs (can, could, may, might, must, should, would)",
+						"- Types of Pronouns (Relative, Demonstrative, Indefinite, Reflexive)",
+						"- Pronoun-Antecedent Agreement",
+						"- Identifying Direct and Indirect Objects",
+						"- Transition Words and Cohesive Devices (however, therefore, furthermore)",
+						"- Misplaced and Dangling Modifiers (identifying the correct sentence structure)",
+						"- Figures of Speech (Simile, Metaphor, Personification, Hyperbole, Onomatopoeia)",
+						"- Idiomatic Expressions and Phrasal Verbs",
+					].join("\n")
+				: [
+						"- Aspekto ng Pandiwa (Perpektibo, Imperpektibo, Kontemplatibo, at Perpektibong Katatapos)",
+						"- Pokus ng Pandiwa (Aktor, Layon, Ganapan, Tagatanggap, Gamit, at Sanhi)",
+						"- Kayarian ng Pangungusap (Payak, Tambalan, Hugnayan, at Langkapan)",
+						"- Bahagi ng Pangungusap (Simuno/Paksa at Panaguri) at Ayos nito (Karaniwan at Di-karaniwan)",
+						"- Uri ng Pangngalan (Pantangi, Pambalana, Tahas/Kongkreto, Basal/Di-kongkreto, Lansakan)",
+						"- Kailanan at Kasarian ng Pangngalan at Pang-uri",
+						"- Uri ng Panghalip (Panao, Pamatlig, Pananong, at Panaklaw)",
+						"- Kayarian ng Salita / Pang-uri (Payak, Maylapi, Inuulit, Tambalan)",
+						"- Kaantasan ng Pang-uri (Lantay, Pahambing, Pasukdol)",
+						"- Uri ng Pang-abay (Panlunan, Pamanahon, Pamaraan, Pang-agam, Panang-ayon, Pananggi)",
+						"- Pagkakaiba ng Pang-uri (Adjective) at Pang-abay (Adverb) sa pangungusap",
+						"- Wastong Gamit ng Salita (ng vs. nang, din/rin, daw/raw, subukin/subukan, pahirin/pahiran)",
+						"- Mga Sawikain at Idyoma (Idiomatic expressions frequently used in Grade 6)",
+						"- Pangatnig (Conjunctions) at mga Transitional Devices (sapagkat, upang, samantala, kaya)",
+						"- Denotasyon at Konotasyon (Literal vs. Figurative meaning)",
+					].join("\n"),
 		].join("\n");
 
-		const response = await fetch(
-			"https://openrouter.ai/api/v1/chat/completions",
-			{
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${apiKey}`,
-					"HTTP-Referer": window.location.origin,
-					"X-Title": "Grammar Quiz App",
-				},
-				body: JSON.stringify({
-					// Using the highest-quality free model on OpenRouter
-					model: "openai/gpt-4o-mini",
-					messages: [
-						{
-							role: "system",
-							content:
-								"You are a strict JSON generator for educational worksheets. Return valid JSON containing a 'questions' array. Return nothing else.",
-						},
-						{ role: "user", content: prompt },
-					],
-					response_format: { type: "json_object" },
-					temperature: 0.5,
-					// Bumped to 4000 because 20 questions with added context will be much longer
-					max_tokens: 4000,
-				}),
-			},
-		);
-
-		if (!response.ok) {
-			throw new Error(`OpenRouter request failed: ${response.status}`);
-		}
-
-		const data = await response.json();
-		const text = data?.choices?.[0]?.message?.content;
-		if (typeof text !== "string") {
-			return null;
-		}
-
-		let parsed: unknown;
 		try {
-			parsed = JSON.parse(text);
-		} catch {
-			return null;
-		}
+			const response = await fetch(
+				"https://openrouter.ai/api/v1/chat/completions",
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${apiKey}`,
+						"HTTP-Referer": window.location.origin,
+						"X-Title": "Grammar Quiz App",
+					},
+					body: JSON.stringify({
+						model: "openai/gpt-4o-mini",
+						messages: [
+							{
+								role: "system",
+								content:
+									"You are a strict JSON generator for advanced upper elementary worksheets. Mix up the question types and curriculum concepts evenly across all 20 items so the worksheet represents a comprehensive Grade 6 level test. Return valid JSON containing a 'questions' array. Return nothing else.",
+							},
+							{ role: "user", content: prompt },
+						],
+						response_format: { type: "json_object" },
+						temperature: 0.7,
+						max_tokens: 4000,
+					}),
+				},
+			);
 
-		if (
-			typeof parsed === "object" &&
-			parsed !== null &&
-			"questions" in parsed &&
-			Array.isArray((parsed as { questions: unknown }).questions)
-		) {
-			return sanitizeQuestions((parsed as { questions: unknown[] }).questions);
-		}
+			if (!response.ok) {
+				throw new Error(`OpenRouter request failed: ${response.status}`);
+			}
 
-		return sanitizeQuestions(parsed);
+			const data = await response.json();
+			const text = data?.choices?.[0]?.message?.content;
+			if (typeof text !== "string") {
+				return null;
+			}
+
+			let parsed: unknown;
+			try {
+				parsed = JSON.parse(text);
+			} catch (e) {
+				console.error("Failed to parse JSON:", text);
+				return null;
+			}
+
+			if (
+				typeof parsed === "object" &&
+				parsed !== null &&
+				"questions" in parsed &&
+				Array.isArray((parsed as { questions: unknown }).questions)
+			) {
+				return sanitizeQuestions(
+					(parsed as { questions: unknown[] }).questions,
+				);
+			}
+
+			return sanitizeQuestions(parsed);
+		} catch (error) {
+			console.error("Error fetching questions:", error);
+			return fallbackQuestions();
+		}
 	}
-
 	function initializeStates(nextQuestions: GrammarQuestion[]) {
 		selectedAnswers = new Map();
 		answerStates = new Map();
