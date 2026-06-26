@@ -12,6 +12,7 @@
 		{ id: "surface-volume", name: "Surface Area & Volume" },
 		{ id: "english-grammar", name: "English Grammar" },
 		{ id: "filipino-grammar", name: "Filipino Grammar" },
+		{ id: "science", name: "Science" },
 	];
 
 	function selectWorksheet(worksheetId: string) {
@@ -36,12 +37,16 @@
 	<div class="nav-brand">
 		<h1>Math Worksheets</h1>
 	</div>
-	
+
 	<div class="nav-actions">
 		<button class="stats-btn" on:click={toggleStats} aria-label="View Stats">
 			🌟 Rewards
 		</button>
-		<button class="menu-toggle" aria-label="Toggle navigation menu" on:click={toggleMenu}>
+		<button
+			class="menu-toggle"
+			aria-label="Toggle navigation menu"
+			on:click={toggleMenu}
+		>
 			<span></span>
 			<span></span>
 			<span></span>
@@ -115,7 +120,9 @@
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
-		transition: transform 0.2s, background 0.2s;
+		transition:
+			transform 0.2s,
+			background 0.2s;
 	}
 
 	.stats-btn:hover {

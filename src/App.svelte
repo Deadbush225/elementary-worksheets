@@ -5,6 +5,7 @@
 	import AreaPerimeterWorksheet from "./lib/AreaPerimeterWorksheet.svelte";
 	import SurfaceVolumeWorksheet from "./lib/SurfaceVolumeWorksheet.svelte";
 	import GrammarWorksheet from "./lib/GrammarWorksheet.svelte";
+	import ScienceWorksheet from "./lib/ScienceWorksheet.svelte";
 
 	let currentWorksheet = "fractions";
 </script>
@@ -25,6 +26,8 @@
 			<GrammarWorksheet language="english" />
 		{:else if currentWorksheet === "filipino-grammar"}
 			<GrammarWorksheet language="filipino" />
+		{:else if currentWorksheet === "science"}
+			<ScienceWorksheet />
 		{:else}
 			<div class="placeholder">
 				<h2>
